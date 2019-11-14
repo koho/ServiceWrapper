@@ -90,6 +90,8 @@ namespace ServiceWrapper
         protected override void OnStop()
         {
             Log("Stopping service");
+            if (MainService.process == null)
+                return;
             try
             {
                 MainService.process.Kill();
@@ -106,10 +108,14 @@ namespace ServiceWrapper
         // Handle Exited event and display process information.
         private void ProcessExited(object sender, System.EventArgs e)
         {
-            Log($"Process exited: Exit time: {MainService.process.ExitTime}, Exit code: {MainService.process.ExitCode}");
-            process.Close();
-            process.Dispose();
-            throw new Exception("Process exited");
+            int exitCode = MainService.process.ExitCode;
+            Log($"Process exited: Exit time: {MainService.process.ExitTime}, Exit code: {exitCode}");
+            MainService.process.Close();
+            MainService.process.Dispose();
+            MainService.process = null;
+            if (exitCode != 0)
+                throw new Exception("Process exited with errors");
+            Stop();
         }
     }
 }
